@@ -1,0 +1,21 @@
+import { BrandingSection } from '@/components/auth/BrandingSection';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Login | CRM Portal',
+  description: 'Login to your CRM Portal account',
+};
+
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-screen ">
+      <div className="flex-1 flex items-center justify-center p-8 bg-primary-900">
+        <BrandingSection />
+      </div>
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginForm />
+      </div>
+    </div>
+  );
+}
