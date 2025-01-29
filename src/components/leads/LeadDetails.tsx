@@ -9,6 +9,8 @@ import { Card } from '@/components/ui/Card';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadActivityTimeline } from './LeadActivityTimeline';
 import { LeadStatusSelect } from './LeadStatusSelect';
+import { LeadDetailsCard } from './LeadDetailsCard';
+import { LeadSidebarInfo } from './LeadSidebarInfo';
 import { toast } from 'sonner';
 import { LeadStatus, VALID_STATUS_TRANSITIONS } from '@/types/leads';
 import { formatDate, formatCurrency } from '@/lib/utils';

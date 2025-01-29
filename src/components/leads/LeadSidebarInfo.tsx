@@ -9,47 +9,33 @@ interface LeadSidebarInfoProps {
 export function LeadSidebarInfo({ lead }: LeadSidebarInfoProps) {
   return (
     <Card>
-      <Card.Header>
-        <h3 className="text-lg font-medium">Lead Information</h3>
-      </Card.Header>
-      <Card.Body>
-        <dl className="space-y-4">
+      <div className="p-6">
+        <h3 className="text-sm font-medium text-gray-500 mb-4">Lead Information</h3>
+        
+        <div className="space-y-4">
           <div>
-            <dt className="text-sm font-medium text-gray-500">Created</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {formatDate(lead.createdAt)}
-            </dd>
+            <p className="text-sm font-medium text-gray-500">Source</p>
+            <p className="mt-1 text-gray-900">{lead.source}</p>
           </div>
+
           <div>
-            <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {formatDate(lead.updatedAt)}
-            </dd>
+            <p className="text-sm font-medium text-gray-500">Created</p>
+            <p className="mt-1 text-gray-900">{formatDate(lead.createdAt, true)}</p>
           </div>
+
+          <div>
+            <p className="text-sm font-medium text-gray-500">Last Updated</p>
+            <p className="mt-1 text-gray-900">{formatDate(lead.updatedAt, true)}</p>
+          </div>
+
           {lead.assignedTo && (
             <div>
-              <dt className="text-sm font-medium text-gray-500">Assigned To</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {lead.assignedTo.name}
-              </dd>
+              <p className="text-sm font-medium text-gray-500">Assigned To</p>
+              <p className="mt-1 text-gray-900">Agent #{lead.assignedTo}</p>
             </div>
           )}
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Lead Score</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {lead.score || 'Not calculated'}
-            </dd>
-          </div>
-          {lead.lastContactedAt && (
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Last Contacted</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {formatDate(lead.lastContactedAt)}
-              </dd>
-            </div>
-          )}
-        </dl>
-      </Card.Body>
+        </div>
+      </div>
     </Card>
   );
 } 

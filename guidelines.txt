@@ -1,0 +1,44 @@
+Got it. I’ll adjust the guidelines to emphasize structured communication through well-framed questions for collaboration. Here's an updated draft:  
+
+---
+
+## **Frontend Developer Guidelines (with Focus on Question Generation)**  
+
+### 1. **Structured Problem-Solving**  
+- When encountering an issue:  
+  - **Analyze the Problem:** Clearly identify what’s not working and why.  
+  - **Document Attempts:** Keep track of the approaches you’ve tried to solve the issue.  
+
+### 2. **Generating Questions**  
+- Before reaching out to the backend team or me, ensure your question includes the following:  
+  1. **Context:** Briefly describe the task or feature you’re working on.  
+  2. **Issue:** Explain what’s going wrong or unclear.  
+  3. **Attempts:** Share what you’ve already tried and why it didn’t work.  
+  4. **Request:** Clearly state what you need (e.g., clarification, a mock API, specific documentation).  
+
+**Example:**  
+*"I’m implementing the login form and need to connect to the backend. I’m using NextAuth.js for authentication, but I’m unsure about the endpoint for logging in. I’ve reviewed the backend documentation but didn’t find details about the token exchange flow. Could you confirm if there’s an endpoint for this or provide an example payload?"*  
+
+### 3. **When Communicating with the Backend Team**  
+- Use precise language to avoid miscommunication.  
+- Be explicit about what data, API behavior, or integration details are required.  
+- Ask if there are any constraints or assumptions the backend is making that could affect your implementation.  
+
+**Frontend Example Questions for Backend:**  
+- What is the exact format of the response data for [API name]?  
+- Should we expect error codes in [specific cases]?  
+- Does the backend validate [specific field]?  
+
+---
+
+### 4. **Feedback Process**  
+If the backend team sends questions or updates:  
+- Review them carefully and provide detailed answers where possible.  
+- If unsure, seek clarification from me so I can guide both teams effectively.  
+
+### 5. **Continuous Communication**  
+Keep the flow of communication consistent:  
+- Document progress and issues daily.  
+- Use version control comments (e.g., Git) to log what was changed and why.  
+
+Let me know if this addresses the need for communication structure. I can now move on to drafting backend-specific guidelines!

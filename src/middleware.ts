@@ -4,24 +4,30 @@ import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login');
 
-  if (isAuthPage) {
-    if (token) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return NextResponse.next();
+  // If there's no token and we're not on the login page, redirect to login
+  if (!token && !request.nextUrl.pathname.startsWith('/login')) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (!token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+  // If we have a token and we're on the login page, redirect to dashboard
+  if (token && request.nextUrl.pathname.startsWith('/login')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+  ],
 };

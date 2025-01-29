@@ -1,37 +1,73 @@
 import 'next-auth';
-import { JWT as NextAuthJWT } from 'next-auth/jwt';
+import { DefaultSession, DefaultUser } from 'next-auth';
+import { User as BaseUser } from 'next-auth';
+import { JWT as BaseJWT } from 'next-auth/jwt';
+import type { User as CustomUser } from './auth';
 
 declare module 'next-auth' {
   interface Session {
-    accessToken: string;
-    refreshToken: string;
-    expires: number;
     user: {
-      id: string;
+      userId: number;
       email: string;
+      roleId: number;
       name: string;
-      role: UserRole;
-    }
+      isActive: boolean;
+      lastLoginAt: string;
+      createdAt: string;
+      updatedAt: string;
+      accessToken: string;
+      refreshToken: string;
+      expires_at: string;
+    } & DefaultSession['user'];
+    error?: 'RefreshAccessTokenError';
   }
 
-  interface User {
-    id: string;
+  interface User extends DefaultUser {
+    userId: number;
     email: string;
+    roleId: number;
     name: string;
-    role: UserRole;
+    isActive: boolean;
+    lastLoginAt: string;
+    createdAt: string;
+    updatedAt: string;
     accessToken: string;
     refreshToken: string;
-    expires: number;
+    expires_at: string;
   }
 }
 
 declare module 'next-auth/jwt' {
-  interface JWT extends NextAuthJWT {
+  interface JWT {
+    userId: number;
+    email: string;
+    roleId: number;
+    name: string;
+    isActive: boolean;
+    lastLoginAt: string;
+    createdAt: string;
+    updatedAt: string;
     accessToken: string;
     refreshToken: string;
-    expires: number;
-    role: UserRole;
+    expires_at: string;
   }
 }
 
-type UserRole = 'ADMIN' | 'AGENT' | 'MANAGER'; 
+declare module 'next-auth' {
+  interface User extends CustomUser {
+    accessToken: string;
+    refreshToken: string;
+  }
+
+  interface Session {
+    user: User;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT extends BaseJWT {
+    accessToken: string;
+    refreshToken: string;
+    user: User;
+  }
+} 

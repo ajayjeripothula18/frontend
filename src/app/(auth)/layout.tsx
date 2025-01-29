@@ -1,21 +1,24 @@
-import { getServerSession } from 'next-auth/next';
-import { redirect } from 'next/navigation';
-import { authOptions } from '../api/auth/auth.config';
+'use client';
 
-export default async function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const session = await getServerSession(authOptions);
+import { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 
-  if (session) {
-    redirect('/dashboard');
-  }
+interface AuthLayoutProps {
+  children: ReactNode;
+}
 
+export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <main className="min-h-screen">
-      {children}
-    </main>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5" />
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10"
+      >
+        {children}
+      </motion.div>
+    </div>
   );
 } 

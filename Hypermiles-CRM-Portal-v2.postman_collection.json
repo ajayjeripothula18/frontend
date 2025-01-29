@@ -1,0 +1,1853 @@
+{
+  "info": {
+    "_postman_id": "6abb1762-20b6-4b0e-8e75-96d9e850e4fe",
+    "name": "Hypermiles-CRM-Portal-v2",
+    "description": "Complete API collection for Hypermiles CRM Portal with authentication, user management, roles, leads, tickets, notifications, audit trail, and customer management endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+    "_exporter_id": "40133828"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "// Ensure the response contains required fields: statusCode, timestamp, and data",
+                  "pm.test(\"Response has required fields\", () => {",
+                  "    pm.expect(response).to.have.property('statusCode');",
+                  "    pm.expect(response).to.have.property('timestamp');",
+                  "    pm.expect(response).to.have.property('data');",
+                  "});",
+                  "",
+                  "// Validate the status code",
+                  "pm.test(\"Status code is 200\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "});",
+                  "",
+                  "// Extract and validate tokens",
+                  "if (response.data.accessToken) {",
+                  "    pm.collectionVariables.set(\"accessToken\", response.data.accessToken);",
+                  "    pm.collectionVariables.set(\"refreshToken\", response.data.refreshToken || \"\");",
+                  "    ",
+                  "    pm.test(\"Tokens are saved correctly\", () => {",
+                  "        pm.expect(pm.collectionVariables.get(\"accessToken\")).to.eql(response.data.accessToken);",
+                  "        pm.expect(pm.collectionVariables.get(\"refreshToken\")).to.eql(response.data.refreshToken || \"\");",
+                  "    });",
+                  "",
+                  "    // Set token expiry time for auto-refresh (30 minutes)",
+                  "    const expiryTime = new Date().getTime() + (30 * 60 * 1000);",
+                  "    pm.collectionVariables.set(\"tokenExpiryTime\", expiryTime);",
+                  "} else {",
+                  "    console.error(\"Access token not found in response\");",
+                  "}",
+                  "",
+                  "// Validate user object",
+                  "if (response.data.user) {",
+                  "    pm.test(\"User object is valid\", () => {",
+                  "        const user = response.data.user;",
+                  "        const requiredFields = ['userId', 'email', 'roleId', 'isActive', 'status', 'createdAt', 'updatedAt'];",
+                  "        requiredFields.forEach(field => {",
+                  "            pm.expect(user).to.have.property(field);",
+                  "        });",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Clear any existing tokens",
+                  "pm.collectionVariables.set(\"accessToken\", \"\");",
+                  "pm.collectionVariables.set(\"refreshToken\", \"\");",
+                  "pm.collectionVariables.set(\"tokenExpiryTime\", 0);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Authenticate user and receive access/refresh tokens"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Token refresh successful', () => {",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    ",
+                  "    // Update token expiry time",
+                  "    const expiryTime = new Date().getTime() + (30 * 60 * 1000);",
+                  "    pm.collectionVariables.set(\"tokenExpiryTime\", expiryTime);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Check if token refresh is needed",
+                  "const tokenExpiryTime = pm.collectionVariables.get(\"tokenExpiryTime\");",
+                  "const currentTime = new Date().getTime();",
+                  "",
+                  "if (currentTime >= tokenExpiryTime) {",
+                  "    console.log(\"Token expired, initiating refresh\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/refresh-token",
+            "description": "Refresh access token using refresh token"
+          }
+        },
+        {
+          "name": "Get Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Profile data is valid\", () => {",
+                  "    pm.expect(response.data).to.have.property('user');",
+                  "    pm.expect(response.data.user).to.include.all.keys([",
+                  "        'userId',",
+                  "        'email',",
+                  "        'name',",
+                  "        'roleId',",
+                  "        'status'",
+                  "    ]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/profile",
+            "description": "Get current user profile"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Password reset request successful\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.message).to.include('reset');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/forgot-password",
+            "description": "Request password reset email"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Password reset successful\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.message).to.include('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NewSecurePass123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/reset-password",
+            "description": "Reset password using token"
+          }
+        }
+      ],
+      "description": "Authentication related endpoints including login, token refresh, and password management"
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response.meta).to.have.all.keys(['total', 'page', 'limit']);",
+                  "});",
+                  "",
+                  "if (response.data.length > 0) {",
+                  "    pm.test(\"User objects have required fields\", () => {",
+                  "        const user = response.data[0];",
+                  "        pm.expect(user).to.include.all.keys([",
+                  "            'userId',",
+                  "            'email',",
+                  "            'name',",
+                  "            'roleId',",
+                  "            'status',",
+                  "            'isActive'",
+                  "        ]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users",
+            "description": "Get all users with pagination and filtering options",
+            "query": [
+              {
+                "key": "page",
+                "value": "1"
+              },
+              {
+                "key": "limit",
+                "value": "10"
+              },
+              {
+                "key": "search",
+                "value": ""
+              },
+              {
+                "key": "status",
+                "value": "active"
+              },
+              {
+                "key": "roleId",
+                "value": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"User created successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(201);",
+                  "    pm.expect(response.data).to.have.property('userId');",
+                  "    ",
+                  "    // Store userId for other requests",
+                  "    if (response.data.userId) {",
+                  "        pm.collectionVariables.set(\"userId\", response.data.userId);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"roleId\": 2,\n  \"phone\": \"+1234567890\",\n  \"status\": \"active\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/users",
+            "description": "Create a new user with specified details"
+          }
+        },
+        {
+          "name": "Update User Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Status updated successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data.status).to.eql(pm.request.body.status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"suspended\",\n  \"reason\": \"Policy violation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/users/{{userId}}/status",
+            "description": "Update user status with reason"
+          }
+        }
+      ],
+      "description": "User management endpoints including CRUD operations and status management"
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "Get All Roles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Roles list is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    if (response.data.length > 0) {",
+                  "        pm.expect(response.data[0]).to.include.all.keys([",
+                  "            'roleId',",
+                  "            'name',",
+                  "            'permissions',",
+                  "            'isActive'",
+                  "        ]);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/roles",
+            "description": "Get all available roles"
+          }
+        },
+        {
+          "name": "Get Role by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Role details are valid\", () => {",
+                  "    pm.expect(response.data).to.include.all.keys([",
+                  "        'roleId',",
+                  "        'roleName',",
+                  "        'isActive',",
+                  "        'permissions',",
+                  "        'createdAt',",
+                  "        'updatedAt'",
+                  "    ]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/roles/{{roleId}}",
+            "description": "Get role details by ID"
+          }
+        },
+        {
+          "name": "Create Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Role created successfully\", () => {",
+                  "    pm.expect(response.data).to.include.all.keys([",
+                  "        'roleId',",
+                  "        'roleName',",
+                  "        'isActive',",
+                  "        'permissions'",
+                  "    ]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/roles",
+            "description": "Create a new role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleName\": \"supervisor\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Role updated successfully\", () => {",
+                  "    pm.expect(response.data).to.include.all.keys([",
+                  "        'roleId',",
+                  "        'roleName',",
+                  "        'isActive',",
+                  "        'permissions'",
+                  "    ]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/roles/{{roleId}}",
+            "description": "Update role details",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleName\": \"supervisor\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Role deleted successfully\", () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.message).to.include('deleted');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/roles/{{roleId}}",
+            "description": "Delete a role"
+          }
+        },
+        {
+          "name": "Assign Permissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Permissions assigned successfully\", () => {",
+                  "    pm.expect(response.data).to.include.all.keys([",
+                  "        'roleId',",
+                  "        'roleName',",
+                  "        'permissions'",
+                  "    ]);",
+                  "    pm.expect(response.data.permissions).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/roles/{{roleId}}/permissions",
+            "description": "Assign permissions to a role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": [\n    \"users.read\",\n    \"leads.read\",\n    \"leads.create\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Available Permissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Available permissions list is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response.data.length).to.be.greaterThan(0);",
+                  "    pm.expect(response.data[0]).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/roles/permissions/available",
+            "description": "Get list of all available permissions"
+          }
+        },
+        {
+          "name": "Get Users by Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Users list is valid\", () => {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    if (response.data.length > 0) {",
+                  "        pm.expect(response.data[0]).to.include.all.keys([",
+                  "            'userId',",
+                  "            'email',",
+                  "            'firstName',",
+                  "            'lastName',",
+                  "            'status'",
+                  "        ]);",
+                  "    }",
+                  "    pm.expect(response.total).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/roles/{{roleId}}/users",
+            "description": "Get all users assigned to a specific role"
+          }
+        }
+      ],
+      "description": "Role management endpoints including CRUD operations and permission management"
+    },
+    {
+      "name": "Leads",
+      "item": [
+        {
+          "name": "Get All Leads",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response.meta).to.have.all.keys(['total', 'page', 'limit']);",
+                  "});",
+                  "",
+                  "if (response.data.length > 0) {",
+                  "    pm.test(\"Lead objects have required fields\", () => {",
+                  "        const lead = response.data[0];",
+                  "        pm.expect(lead).to.include.all.keys([",
+                  "            'leadId',",
+                  "            'name',",
+                  "            'email',",
+                  "            'phone',",
+                  "            'status',",
+                  "            'source',",
+                  "            'assignedAgentId',",
+                  "            'createdAt'",
+                  "        ]);",
+                  "    });",
+                  "    ",
+                  "    // Store leadId for other requests",
+                  "    pm.collectionVariables.set(\"leadId\", response.data[0].leadId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/leads",
+            "description": "Get all leads with pagination and filtering options",
+            "query": [
+              {
+                "key": "page",
+                "value": "1"
+              },
+              {
+                "key": "limit",
+                "value": "10"
+              },
+              {
+                "key": "status",
+                "value": ""
+              },
+              {
+                "key": "assignedAgentId",
+                "value": ""
+              },
+              {
+                "key": "source",
+                "value": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create Lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Lead created successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(201);",
+                  "    pm.expect(response.data).to.have.property('leadId');",
+                  "    ",
+                  "    if (response.data.leadId) {",
+                  "        pm.collectionVariables.set(\"leadId\", response.data.leadId);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ram Sharma\",\n  \"phone\": \"+919876543210\",\n  \"email\": \"ram.sharma@example.com\",\n  \"source\": \"Just Dial\",\n  \"status\": \"NEW\",\n  \"assignedAgentId\": \"{{userId}}\",\n  \"notes\": \"Interested in premium services\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/leads",
+            "description": "Create a new lead"
+          }
+        },
+        {
+          "name": "Update Lead Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Lead status updated successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data.status).to.eql(pm.request.body.status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONTACTED\",\n  \"notes\": \"Initial contact made\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/leads/{{leadId}}/status",
+            "description": "Update lead status with notes"
+          }
+        },
+        {
+          "name": "Get Lead Activities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    if (response.data.length > 0) {",
+                  "        pm.expect(response.data[0]).to.include.all.keys([",
+                  "            'id',",
+                  "            'leadId',",
+                  "            'type',",
+                  "            'userId',",
+                  "            'createdAt'",
+                  "        ]);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/leads/{{leadId}}/activities",
+            "description": "Get activities for a specific lead"
+          }
+        },
+        {
+          "name": "Convert Lead to Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Lead converted successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data).to.have.property('customerId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/leads/{{leadId}}/convert",
+            "description": "Convert a lead to a customer"
+          }
+        },
+        {
+          "name": "Score Lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Lead scored successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data).to.have.property('score');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/leads/{{leadId}}/score",
+            "description": "Score a lead",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": 85,\n  \"criteria\": {\n    \"budget\": 8,\n    \"authority\": 9,\n    \"need\": 8,\n    \"timeline\": 7\n  },\n  \"notes\": \"High potential lead with immediate needs\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Qualify Lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Lead qualified successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data).to.have.property('qualification');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/leads/{{leadId}}/qualify",
+            "description": "Qualify a lead",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qualification\": \"QUALIFIED\",\n  \"reason\": \"Meets all qualification criteria\",\n  \"details\": {\n    \"budgetFit\": true,\n    \"decisionMaker\": true,\n    \"timeframe\": \"IMMEDIATE\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Lead Scores",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    if (response.data.length > 0) {",
+                  "        pm.expect(response.data[0]).to.include.all.keys([",
+                  "            'id',",
+                  "            'leadId',",
+                  "            'score',",
+                  "            'criteria',",
+                  "            'createdAt'",
+                  "        ]);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/leads/{{leadId}}/scores",
+            "description": "Get scoring history for a lead"
+          }
+        },
+        {
+          "name": "Get Lead Qualifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    if (response.data.length > 0) {",
+                  "        pm.expect(response.data[0]).to.include.all.keys([",
+                  "            'id',",
+                  "            'leadId',",
+                  "            'qualification',",
+                  "            'reason',",
+                  "            'createdAt'",
+                  "        ]);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/leads/{{leadId}}/qualifications",
+            "description": "Get qualification history for a lead"
+          }
+        },
+        {
+          "name": "Get Lead Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Lead metrics are valid\", () => {",
+                  "    pm.expect(response.data).to.include.all.keys([",
+                  "        'totalLeads',",
+                  "        'qualifiedLeads',",
+                  "        'unqualifiedLeads',",
+                  "        'averageScore',",
+                  "        'temperatureDistribution',",
+                  "        'conversionRate'",
+                  "    ]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/leads/{{leadId}}/metrics",
+            "description": "Get metrics for a lead"
+          }
+        },
+        {
+          "name": "Bulk Update Leads",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bulk update successful\", () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/leads/bulk/update",
+            "description": "Update multiple leads at once",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leadIds\": [1, 2, 3],\n  \"status\": \"CONTACTED\",\n  \"assignedAgentId\": \"{{userId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Import Leads",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Import successful\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data).to.have.property('summary');",
+                  "    pm.expect(response.data.summary).to.include.all.keys([",
+                  "        'total',",
+                  "        'successful',",
+                  "        'failed'",
+                  "    ]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/leads/import",
+            "description": "Import leads from file",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "format",
+                  "value": "csv",
+                  "type": "text"
+                },
+                {
+                  "key": "notes",
+                  "value": "Bulk import from CSV",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Leads to CSV",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/leads/export/csv",
+            "description": "Export leads to CSV format",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"status\": [\"NEW\", \"CONTACTED\"],\n    \"assignedAgentId\": \"{{userId}}\"\n  },\n  \"fields\": [\"name\", \"email\", \"phone\", \"status\", \"source\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Export Leads to Excel",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/leads/export/excel",
+            "description": "Export leads to Excel format",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"status\": [\"NEW\", \"CONTACTED\"],\n    \"assignedAgentId\": \"{{userId}}\"\n  },\n  \"fields\": [\"name\", \"email\", \"phone\", \"status\", \"source\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Merge Leads",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Merge successful\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data).to.have.property('leadId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/leads/merge",
+            "description": "Merge duplicate leads",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"primaryLeadId\": 1,\n  \"secondaryLeadIds\": [2, 3],\n  \"fieldPreferences\": {\n    \"name\": \"primary\",\n    \"email\": \"primary\",\n    \"phone\": \"latest\",\n    \"notes\": \"concatenate\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "Lead management endpoints including CRUD operations and status management"
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "Get All Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response.meta).to.have.all.keys(['total', 'page', 'limit']);",
+                  "});",
+                  "",
+                  "if (response.data.length > 0) {",
+                  "    pm.test(\"Ticket objects have required fields\", () => {",
+                  "        const ticket = response.data[0];",
+                  "        pm.expect(ticket).to.include.all.keys([",
+                  "            'ticketId',",
+                  "            'ticketType',",
+                  "            'priority',",
+                  "            'status',",
+                  "            'description',",
+                  "            'assignedAgentId',",
+                  "            'createdAt'",
+                  "        ]);",
+                  "    });",
+                  "    ",
+                  "    pm.collectionVariables.set(\"ticketId\", response.data[0].ticketId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tickets",
+            "description": "Get all tickets with pagination and filtering options",
+            "query": [
+              {
+                "key": "page",
+                "value": "1"
+              },
+              {
+                "key": "limit",
+                "value": "10"
+              },
+              {
+                "key": "status",
+                "value": ""
+              },
+              {
+                "key": "priority",
+                "value": ""
+              },
+              {
+                "key": "assignedAgentId",
+                "value": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Ticket created successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(201);",
+                  "    pm.expect(response.data).to.have.property('ticketId');",
+                  "    ",
+                  "    if (response.data.ticketId) {",
+                  "        pm.collectionVariables.set(\"ticketId\", response.data.ticketId);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketType\": \"COMPLAINT\",\n  \"priority\": \"HIGH\",\n  \"description\": \"Customer reported service issue\",\n  \"associatedLeadId\": \"{{leadId}}\",\n  \"assignedAgentId\": \"{{userId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/tickets",
+            "description": "Create a new ticket"
+          }
+        },
+        {
+          "name": "Get Ticket by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Ticket details are valid\", () => {",
+                  "    pm.expect(response.data).to.include.all.keys([",
+                  "        'ticketId',",
+                  "        'ticketType',",
+                  "        'priority',",
+                  "        'status',",
+                  "        'description',",
+                  "        'assignedAgentId',",
+                  "        'createdAt'",
+                  "    ]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tickets/{{ticketId}}",
+            "description": "Get ticket details by ID"
+          }
+        },
+        {
+          "name": "Update Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Ticket updated successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data).to.have.property('ticketId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"MEDIUM\",\n  \"status\": \"IN_PROGRESS\",\n  \"description\": \"Updated ticket description\",\n  \"assignedAgentId\": \"{{userId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/tickets/{{ticketId}}",
+            "description": "Update ticket details"
+          }
+        },
+        {
+          "name": "Delete Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Ticket deleted successfully\", () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/tickets/{{ticketId}}",
+            "description": "Delete a ticket"
+          }
+        }
+      ],
+      "description": "Ticket management endpoints including CRUD operations"
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get All Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response.meta).to.have.all.keys(['total', 'page', 'limit']);",
+                  "});",
+                  "",
+                  "if (response.data.length > 0) {",
+                  "    pm.test(\"Notification objects have required fields\", () => {",
+                  "        const notification = response.data[0];",
+                  "        pm.expect(notification).to.include.all.keys([",
+                  "            'id',",
+                  "            'recipientUserId',",
+                  "            'messageContent',",
+                  "            'status',",
+                  "            'notificationType',",
+                  "            'createdAt'",
+                  "        ]);",
+                  "    });",
+                  "    ",
+                  "    pm.collectionVariables.set(\"notificationId\", response.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notifications",
+            "description": "Get all notifications with pagination and filtering",
+            "query": [
+              {
+                "key": "page",
+                "value": "1"
+              },
+              {
+                "key": "limit",
+                "value": "10"
+              },
+              {
+                "key": "status",
+                "value": ""
+              },
+              {
+                "key": "type",
+                "value": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Notification by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Notification details are valid\", () => {",
+                  "    pm.expect(response.data).to.include.all.keys([",
+                  "        'id',",
+                  "        'recipientUserId',",
+                  "        'messageContent',",
+                  "        'status',",
+                  "        'notificationType',",
+                  "        'createdAt'",
+                  "    ]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notifications/{{notificationId}}",
+            "description": "Get notification details by ID"
+          }
+        },
+        {
+          "name": "Mark as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Notification marked as read\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(200);",
+                  "    pm.expect(response.data.status).to.eql('READ');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notifications/{{notificationId}}/read",
+            "description": "Mark notification as read"
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Unread count is valid\", () => {",
+                  "    pm.expect(response.data).to.have.property('count');",
+                  "    pm.expect(response.data.count).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notifications/user/{{userId}}/unread-count",
+            "description": "Get unread notifications count for user"
+          }
+        }
+      ],
+      "description": "Notification management endpoints including CRUD operations and status management"
+    },
+    {
+      "name": "Audit Trail",
+      "item": [
+        {
+          "name": "Get Audit Trail Entries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response.meta).to.have.all.keys(['total', 'page', 'limit']);",
+                  "});",
+                  "",
+                  "if (response.data.length > 0) {",
+                  "    pm.test(\"Audit trail entries have required fields\", () => {",
+                  "        const entry = response.data[0];",
+                  "        pm.expect(entry).to.include.all.keys([",
+                  "            'id',",
+                  "            'userId',",
+                  "            'entityType',",
+                  "            'entityId',",
+                  "            'action',",
+                  "            'createdAt'",
+                  "        ]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-trail",
+            "description": "Get audit trail entries with filtering options",
+            "query": [
+              {
+                "key": "page",
+                "value": "1"
+              },
+              {
+                "key": "limit",
+                "value": "10"
+              },
+              {
+                "key": "userId",
+                "value": ""
+              },
+              {
+                "key": "entityType",
+                "value": ""
+              },
+              {
+                "key": "action",
+                "value": ""
+              },
+              {
+                "key": "startDate",
+                "value": ""
+              },
+              {
+                "key": "endDate",
+                "value": ""
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Entity Audit Trail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Entity audit trail is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    if (response.data.length > 0) {",
+                  "        const entry = response.data[0];",
+                  "        pm.expect(entry).to.include.all.keys([",
+                  "            'id',",
+                  "            'userId',",
+                  "            'entityType',",
+                  "            'entityId',",
+                  "            'action',",
+                  "            'oldValues',",
+                  "            'newValues',",
+                  "            'createdAt'",
+                  "        ]);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-trail/{{entityType}}/{{entityId}}",
+            "description": "Get audit trail for specific entity",
+            "query": [
+              {
+                "key": "page",
+                "value": "1"
+              },
+              {
+                "key": "limit",
+                "value": "10"
+              }
+            ]
+          }
+        }
+      ],
+      "description": "Audit trail endpoints for tracking system changes"
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Get All Customers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Response structure is valid\", () => {",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response.meta).to.have.all.keys(['total', 'page', 'limit']);",
+                  "});",
+                  "",
+                  "if (response.data.length > 0) {",
+                  "    pm.test(\"Customer objects have required fields\", () => {",
+                  "        const customer = response.data[0];",
+                  "        pm.expect(customer).to.include.all.keys([",
+                  "            'customerId',",
+                  "            'name',",
+                  "            'email',",
+                  "            'phone',",
+                  "            'companyName',",
+                  "            'isActive'",
+                  "        ]);",
+                  "    });",
+                  "    ",
+                  "    // Store customerId for other requests",
+                  "    pm.collectionVariables.set(\"customerId\", response.data[0].customerId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customers",
+            "description": "Get all customers with pagination and filtering options",
+            "query": [
+              {
+                "key": "page",
+                "value": "1"
+              },
+              {
+                "key": "limit",
+                "value": "10"
+              },
+              {
+                "key": "search",
+                "value": ""
+              },
+              {
+                "key": "isActive",
+                "value": "true"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"Customer created successfully\", () => {",
+                  "    pm.expect(response.statusCode).to.eql(201);",
+                  "    pm.expect(response.data).to.have.property('customerId');",
+                  "    ",
+                  "    if (response.data.customerId) {",
+                  "        pm.collectionVariables.set(\"customerId\", response.data.customerId);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+1234567890\",\n  \"companyName\": \"Acme Corp\",\n  \"website\": \"https://acme.com\",\n  \"industry\": \"Technology\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"postalCode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"notes\": \"VIP customer\",\n  \"socialProfiles\": {\n    \"linkedin\": \"https://linkedin.com/in/johndoe\",\n    \"twitter\": \"https://twitter.com/johndoe\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/customers",
+            "description": "Create a new customer"
+          }
+        }
+      ],
+      "description": "Customer management endpoints including CRUD operations and activity tracking"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": {
+      "token": "{{accessToken}}"
+    }
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Check token expiry before each request",
+          "const tokenExpiryTime = pm.collectionVariables.get(\"tokenExpiryTime\");",
+          "const currentTime = new Date().getTime();",
+          "",
+          "if (currentTime >= tokenExpiryTime) {",
+          "    console.log(\"Token expired, refresh needed\");",
+          "    // Trigger token refresh request",
+          "    pm.sendRequest({",
+          "        url: pm.collectionVariables.get(\"baseUrl\") + \"/auth/refresh-token\",",
+          "        method: 'POST',",
+          "        header: {",
+          "            'Content-Type': 'application/json'",
+          "        },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                refreshToken: pm.collectionVariables.get(\"refreshToken\")",
+          "            })",
+          "        }",
+          "    }, function (err, res) {",
+          "        if (!err && res.code === 200) {",
+          "            const response = res.json();",
+          "            if (response.data && response.data.accessToken) {",
+          "                pm.collectionVariables.set(\"accessToken\", response.data.accessToken);",
+          "                const newExpiryTime = new Date().getTime() + (30 * 60 * 1000);",
+          "                pm.collectionVariables.set(\"tokenExpiryTime\", newExpiryTime);",
+          "                console.log(\"Token refreshed successfully\");",
+          "            }",
+          "        } else {",
+          "            console.error(\"Failed to refresh token\");",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global response validation",
+          "if (pm.response.code === 401) {",
+          "    console.log(\"Unauthorized access, check authentication\");",
+          "} else if (pm.response.code === 403) {",
+          "    console.log(\"Forbidden access, check permissions\");",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenExpiryTime",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "userEmail",
+      "value": "admin@hypermiles.com",
+      "type": "string"
+    },
+    {
+      "key": "userPassword",
+      "value": "Admin123",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leadId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "entityType",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "entityId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "roleId",
+      "value": "",
+      "type": "string",
+      "description": "ID of the role for role-specific operations"
+    }
+  ]
+}

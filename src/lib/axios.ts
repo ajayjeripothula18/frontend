@@ -1,43 +1,48 @@
-import axios from 'axios';
-import { getSession } from 'next-auth/react';
+import axios, { AxiosError } from 'axios';
+import { getAccessToken } from '@/utils/token-manager';
+import { ApiErrorResponse } from '@/types/auth';
+import { createAuthError } from '@/utils/auth-errors';
 
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
+export const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json'
   },
+  timeout: 10000, // 10 seconds timeout
+  timeoutErrorMessage: 'Request timed out. Please try again.'
 });
 
-api.interceptors.request.use(async (config) => {
-  const session = await getSession();
-  
-  if (session?.user) {
-    config.headers.Authorization = `Bearer ${session.accessToken}`;
+// Add request interceptor to attach the access token
+api.interceptors.request.use(
+  (config) => {
+    const token = getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  
-  return config;
-});
+);
 
+// Add response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        // Handle token refresh here
-        const session = await getSession();
-        if (session?.accessToken) {
-          originalRequest.headers.Authorization = `Bearer ${session.accessToken}`;
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        return Promise.reject(refreshError);
-      }
+  (error: AxiosError<ApiErrorResponse>) => {
+    if (error.response?.data) {
+      const { statusCode, message, error: errorType } = error.response.data;
+      return Promise.reject(
+        createAuthError(
+          errorType as any,
+          message,
+          statusCode,
+          error.response.headers['retry-after']
+            ? parseInt(error.response.headers['retry-after'])
+            : undefined
+        )
+      );
     }
-
     return Promise.reject(error);
   }
 );

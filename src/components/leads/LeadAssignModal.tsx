@@ -27,15 +27,16 @@ export function LeadAssignModal({
   const queryClient = useQueryClient();
 
   const { mutate: assignLead, isPending } = useMutation({
-    mutationFn: (params: AssignLeadParams) => 
-      leadsService.assignLead(leadId, params.assignedAgentId || undefined),
+    mutationFn: (params: AssignLeadParams) =>
+      leadsService.assignLead(leadId, params.assignedAgentId || null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
       toast.success('Lead assigned successfully');
       onClose();
     },
-    onError: () => {
+    onError: (error) => {
       toast.error('Failed to assign lead');
+      console.error('Error assigning lead:', error);
     }
   });
 
@@ -54,12 +55,13 @@ export function LeadAssignModal({
           </label>
           <Select
             value={selectedAgentId?.toString()}
-            onValueChange={(value) => setSelectedAgentId(value ? Number(value) : undefined)}
+            onChange={(e) => setSelectedAgentId(e.target.value ? Number(e.target.value) : undefined)}
             className="mt-1"
-          >
-            <Select.Option value="">Select an agent</Select.Option>
-            {/* Add agent options here - you'll need to fetch these from your backend */}
-          </Select>
+            options={[
+              { label: 'Select an agent', value: '' },
+              // Add agent options here - you'll need to fetch these from your backend
+            ]}
+          />
         </div>
 
         <div className="flex justify-end space-x-2">

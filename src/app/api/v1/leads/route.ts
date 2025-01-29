@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
     const response = await fetch(`${process.env.API_URL}/api/v1/leads`, {
       headers: {
-        'Authorization': `Bearer ${session.accessToken}`,
+        'Authorization': `Bearer ${session.user.accessToken}`,
         'Content-Type': 'application/json',
       },
       next: { revalidate: 0 }
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const response = await fetch(`${process.env.API_URL}/api/v1/leads`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.accessToken}`,
+        'Authorization': `Bearer ${session.user.accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(validatedData),

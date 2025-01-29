@@ -17,6 +17,17 @@ interface LeadFilters {
   isArchived?: boolean;
 }
 
+interface LeadAttachment {
+  id: number;
+  leadId: number;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedBy: number;
+  uploadedAt: string;
+  url: string;
+}
+
 export const leadsService = {
   getLeads: async ({ page = 1, limit = 10 }) => {
     const { data } = await api.get<{
@@ -54,15 +65,15 @@ export const leadsService = {
     return response.data;
   },
 
-  assignLead: async (id: string, assignedAgentId: number) => {
+  assignLead: async (id: string, assignedAgentId: number | null) => {
     const response = await api.post<Lead>(API_ROUTES.LEADS.ASSIGN(id), {
-      assignedAgentId
+      assignedAgentId: assignedAgentId || null
     });
     return response.data;
   },
 
-  convertToCustomer: async (id: string) => {
-    const response = await api.post(API_ROUTES.LEADS.CONVERT(id));
+  convertToCustomer: async (id: string, companyName?: string) => {
+    const response = await api.post(API_ROUTES.LEADS.CONVERT(id), { companyName });
     return response.data;
   },
 
@@ -110,5 +121,30 @@ export const leadsService = {
   getConversionRates: async () => {
     const { data } = await api.get('/leads/conversion-rates');
     return data;
+  },
+
+  getLeadAttachments: async (leadId: string) => {
+    const { data } = await api.get<LeadAttachment[]>(`/api/v1/leads/${leadId}/attachments`);
+    return data;
+  },
+
+  uploadAttachment: async (leadId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const { data } = await api.post<LeadAttachment>(
+      `/api/v1/leads/${leadId}/attachments`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return data;
+  },
+
+  deleteAttachment: async (leadId: string, attachmentId: number) => {
+    await api.delete(`/api/v1/leads/${leadId}/attachments/${attachmentId}`);
   },
 }; 

@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { LEAD_SOURCES, LEAD_STATUSES } from '@/lib/constants';
-import { LeadStatus } from '@/types/leads';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LeadFiltersProps {
@@ -93,14 +92,14 @@ export function LeadFilters({ onFilterChange }: LeadFiltersProps) {
                   <Select
                     value={filters.status}
                     onChange={(e) => handleFilterChange('status', e.target.value)}
-                  >
-                    <option value="">All Statuses</option>
-                    {Object.values(LeadStatus).map((status) => (
-                      <option key={status} value={status}>
-                        {status.replace('_', ' ')}
-                      </option>
-                    ))}
-                  </Select>
+                    options={[
+                      { label: 'All Statuses', value: '' },
+                      ...Object.entries(LEAD_STATUSES).map(([value, label]) => ({
+                        label,
+                        value
+                      }))
+                    ]}
+                  />
                 </div>
 
                 <div>
@@ -108,14 +107,14 @@ export function LeadFilters({ onFilterChange }: LeadFiltersProps) {
                   <Select
                     value={filters.source}
                     onChange={(e) => handleFilterChange('source', e.target.value)}
-                  >
-                    <option value="">All Sources</option>
-                    {LEAD_SOURCES.map((source) => (
-                      <option key={source} value={source}>
-                        {source.replace('_', ' ')}
-                      </option>
-                    ))}
-                  </Select>
+                    options={[
+                      { label: 'All Sources', value: '' },
+                      ...LEAD_SOURCES.map((source) => ({
+                        label: source.replace('_', ' '),
+                        value: source
+                      }))
+                    ]}
+                  />
                 </div>
 
                 <div>
@@ -123,13 +122,14 @@ export function LeadFilters({ onFilterChange }: LeadFiltersProps) {
                   <Select
                     value={filters.dateRange}
                     onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-                  >
-                    <option value="">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="quarter">This Quarter</option>
-                  </Select>
+                    options={[
+                      { label: 'All Time', value: '' },
+                      { label: 'Today', value: 'today' },
+                      { label: 'This Week', value: 'week' },
+                      { label: 'This Month', value: 'month' },
+                      { label: 'This Quarter', value: 'quarter' }
+                    ]}
+                  />
                 </div>
               </div>
             </motion.div>

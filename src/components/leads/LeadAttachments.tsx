@@ -10,18 +10,24 @@ interface LeadAttachmentsProps {
   leadId: string;
 }
 
-interface Attachment {
-  id: string;
+type Attachment = {
+  id: number;
+  leadId: number;
   fileName: string;
   fileSize: number;
-  fileType: string;
+  mimeType: string;
+  uploadedBy: number;
   uploadedAt: string;
-  uploadedBy: {
-    id: number;
-    name: string;
-  };
   url: string;
-}
+};
+
+const ALLOWED_FILE_TYPES = [
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
+];
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export function LeadAttachments({ leadId }: LeadAttachmentsProps) {
   const queryClient = useQueryClient();
@@ -32,19 +38,27 @@ export function LeadAttachments({ leadId }: LeadAttachmentsProps) {
   });
 
   const { mutate: uploadAttachment, isPending: isUploading } = useMutation({
-    mutationFn: (file: File) => leadsService.uploadAttachment(leadId, file),
+    mutationFn: (file: File) => {
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        throw new Error('Invalid file type. Only Excel and CSV files are allowed.');
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error('File size exceeds 5MB limit.');
+      }
+      return leadsService.uploadAttachment(leadId, file);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lead-attachments', leadId] });
       queryClient.invalidateQueries({ queryKey: ['lead-activities', leadId] });
       toast.success('File uploaded successfully');
     },
-    onError: () => {
-      toast.error('Failed to upload file');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to upload file');
     }
   });
 
   const { mutate: deleteAttachment } = useMutation({
-    mutationFn: (attachmentId: string) => leadsService.deleteAttachment(leadId, attachmentId),
+    mutationFn: (attachmentId: number) => leadsService.deleteAttachment(leadId, attachmentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lead-attachments', leadId] });
       toast.success('File deleted successfully');
@@ -54,7 +68,8 @@ export function LeadAttachments({ leadId }: LeadAttachmentsProps) {
     }
   });
 
-  const handleFileUpload = (files: FileList | null) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
     if (files?.[0]) {
       uploadAttachment(files[0]);
     }
@@ -64,7 +79,7 @@ export function LeadAttachments({ leadId }: LeadAttachmentsProps) {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <FileUpload
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+          accept=".csv,.xls,.xlsx"
           onChange={handleFileUpload}
           disabled={isUploading}
         >
@@ -91,8 +106,7 @@ export function LeadAttachments({ leadId }: LeadAttachmentsProps) {
                   {attachment.fileName}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {formatFileSize(attachment.fileSize)} • Uploaded by{' '}
-                  {attachment.uploadedBy.name} on{' '}
+                  {formatFileSize(attachment.fileSize)} • Uploaded on{' '}
                   {formatDate(attachment.uploadedAt, true)}
                 </p>
               </div>

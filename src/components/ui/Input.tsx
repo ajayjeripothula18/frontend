@@ -1,49 +1,33 @@
-import { forwardRef } from 'react';
-import { cn } from '@/lib/utils';
+'use client';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+import { forwardRef, InputHTMLAttributes } from 'react';
+import { cn } from '@/lib/utils';
+import { BRAND } from '@/config/constants';
+
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  error?: boolean;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, leftIcon, rightIcon, ...props }, ref) => {
+const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, error, type, ...props }, ref) => {
     return (
-      <div className="space-y-1">
-        {label && (
-          <label className="block text-sm font-medium text-gray-700">
-            {label}
-          </label>
+      <input
+        type={type}
+        className={cn(
+          'flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          {
+            'border-red-500 focus-visible:ring-red-500': error,
+            [`focus-visible:ring-[${BRAND.colors.primary}] focus-visible:border-[${BRAND.colors.primary}]`]: !error,
+          },
+          className
         )}
-        <div className="relative">
-          {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              {leftIcon}
-            </div>
-          )}
-          <input
-            className={cn(
-              'block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm',
-              leftIcon && 'pl-10',
-              rightIcon && 'pr-10',
-              error && 'border-red-300 focus:border-red-500 focus:ring-red-500',
-              className
-            )}
-            ref={ref}
-            {...props}
-          />
-          {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              {rightIcon}
-            </div>
-          )}
-        </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-      </div>
+        ref={ref}
+        {...props}
+      />
     );
   }
 );
 
 Input.displayName = 'Input';
+
+export { Input };

@@ -1,20 +1,20 @@
-import { Providers } from '@/providers';
-import { Inter } from 'next/font/google';
-import { Toaster } from 'react-hot-toast';
-import { Analytics } from '@/components/Analytics';
-import './globals.css';
+import { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { Providers } from '@/providers'
+import '@/styles/globals.css'
+import { Toaster } from 'sonner'
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
-  title: 'CRM Portal',
-  description: 'Modern CRM solution for managing leads and customers',
-};
+export const metadata: Metadata = {
+  title: 'HyperMiles CRM',
+  description: 'Customer Relationship Management System',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en">
@@ -22,9 +22,8 @@ export default function RootLayout({
         <Providers>
           {children}
           <Toaster position="top-right" />
-          <Analytics />
         </Providers>
       </body>
     </html>
-  );
+  )
 }

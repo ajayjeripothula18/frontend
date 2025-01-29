@@ -1,20 +1,26 @@
 import { DateTimeString } from './common';
 import { LEAD_STATUSES, LEAD_SOURCES } from '@/lib/constants';
 
-export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WON' | 'LOST';
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WON' | 'LOST' | 'ARCHIVED';
 export type LeadSource = 'EMAIL' | 'WEBSITE' | 'REFERRAL' | 'SOCIAL_MEDIA' | 'PHONE' | 'OTHER';
 
 export enum LeadActivityType {
-  STATUS_CHANGE = 'STATUS_CHANGE',
+  CREATED = 'Created',
+  STATUS_UPDATED = 'Status Updated',
+  UPDATED = 'Updated',
+  ASSIGNED = 'Assigned',
   NOTE_ADDED = 'NOTE_ADDED',
-  EMAIL_SENT = 'EMAIL_SENT',
-  CALL_LOGGED = 'CALL_LOGGED',
-  MEETING_SCHEDULED = 'MEETING_SCHEDULED',
-  ASSIGNED = 'ASSIGNED'
+  ARCHIVED = 'Archived',
+  DELETED = 'DELETED',
+  SCORED = 'SCORED',
+  QUALIFIED = 'QUALIFIED',
+  CONVERTED = 'Converted',
+  MERGED = 'Merged',
+  ESCALATED = 'Escalated'
 }
 
 export interface Lead {
-  id: string;
+  id: number;
   name: string;
   email: string;
   phone?: string;
@@ -23,25 +29,26 @@ export interface Lead {
   source: LeadSource;
   notes?: string;
   value?: number;
-  assignedTo?: string;
+  assignedTo?: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface LeadActivity {
-  id: string;
-  leadId: string;
+  id: number;
+  leadId: number;
+  userId: number;
   type: LeadActivityType;
-  details: string;
-  createdBy: {
-    id: number;
+  description: string;
+  createdAt: string;
+  user: {
+    userId: number;
     name: string;
+    email: string;
   };
-  createdAt: DateTimeString;
 }
 
 export interface CreateLeadDTO {
-  id?: string;
   name: string;
   email: string;
   phone?: string;
@@ -55,17 +62,36 @@ export interface CreateLeadDTO {
 export interface UpdateLeadDTO extends Partial<CreateLeadDTO> {}
 
 export const VALID_STATUS_TRANSITIONS: Record<LeadStatus, LeadStatus[]> = {
-  [LEAD_STATUSES[0]]: [LEAD_STATUSES[1], LEAD_STATUSES[6]],
-  [LEAD_STATUSES[1]]: [LEAD_STATUSES[2], LEAD_STATUSES[5], LEAD_STATUSES[6]],
-  [LEAD_STATUSES[2]]: [LEAD_STATUSES[3], LEAD_STATUSES[5], LEAD_STATUSES[6]],
-  [LEAD_STATUSES[3]]: [LEAD_STATUSES[4], LEAD_STATUSES[5], LEAD_STATUSES[6]],
-  [LEAD_STATUSES[4]]: [LEAD_STATUSES[5], LEAD_STATUSES[6]],
-  [LEAD_STATUSES[5]]: [LEAD_STATUSES[6]],
-  [LEAD_STATUSES[6]]: []
+  NEW: ['CONTACTED', 'ARCHIVED'],
+  CONTACTED: ['QUALIFIED', 'LOST', 'ARCHIVED'],
+  QUALIFIED: ['PROPOSAL', 'LOST', 'ARCHIVED'],
+  PROPOSAL: ['NEGOTIATION', 'LOST', 'ARCHIVED'],
+  NEGOTIATION: ['WON', 'LOST', 'ARCHIVED'],
+  WON: ['ARCHIVED'],
+  LOST: ['ARCHIVED'],
+  ARCHIVED: []
 };
 
 export interface LeadsResponse {
   leads: Lead[];
   totalPages: number;
   currentPage: number;
+}
+
+export interface LeadResponse {
+  leadId: number;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  status: string;
+  source: string;
+  assignedAgent?: {
+    userId: number;
+    name: string;
+    email: string;
+  };
+  potentialValue?: number;
+  createdAt: string;
+  updatedAt: string;
 }

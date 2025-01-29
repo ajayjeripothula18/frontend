@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/auth.config';
 import { z } from 'zod';
-import { LeadStatus } from '@/types/leads';
+
+const LEAD_STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] as const;
+type LeadStatus = typeof LEAD_STATUSES[number];
 
 const statusSchema = z.object({
-  status: z.enum(Object.values(LeadStatus) as [string, ...string[]]),
+  status: z.enum(LEAD_STATUSES),
   statusNote: z.string().optional()
 });
 
@@ -27,7 +29,7 @@ export async function PATCH(
       {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${session.accessToken}`,
+          'Authorization': `Bearer ${session.user.accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(validatedData),

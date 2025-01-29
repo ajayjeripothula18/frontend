@@ -1,3 +1,5 @@
+'use client';
+
 import {
   BarChart,
   Bar,
@@ -18,6 +20,7 @@ interface ChartsProps {
 }
 
 export function Charts({ timeRange }: ChartsProps) {
+  // Sample data - replace with actual data from API
   const barChartData = [
     { name: 'Mon', resolved: 4, open: 3 },
     { name: 'Tue', resolved: 3, open: 2 },
@@ -36,6 +39,7 @@ export function Charts({ timeRange }: ChartsProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Pie Chart */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
         <h3 className="text-lg font-medium text-gray-900 mb-4">
           Ticket Status Distribution
@@ -49,21 +53,27 @@ export function Charts({ timeRange }: ChartsProps) {
                 outerRadius={80}
                 paddingAngle={5}
                 dataKey="value"
+                nameKey="name"
+                label={({ name, percent }) => 
+                  `${name} ${(percent * 100).toFixed(0)}%`
+                }
+                labelLine={false}
               >
                 {pieChartData.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
+                  <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
+              <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
+      {/* Bar Chart */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
         <h3 className="text-lg font-medium text-gray-900 mb-4">
-          Weekly Tickets Trend
+          Weekly Ticket Overview
         </h3>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -73,8 +83,18 @@ export function Charts({ timeRange }: ChartsProps) {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="resolved" fill={BRAND_COLORS.success} />
-              <Bar dataKey="open" fill={BRAND_COLORS.error} />
+              <Bar
+                dataKey="resolved"
+                name="Resolved Tickets"
+                fill={BRAND_COLORS.success}
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="open"
+                name="Open Tickets"
+                fill={BRAND_COLORS.error}
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

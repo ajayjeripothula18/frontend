@@ -2,21 +2,21 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DropdownItem {
   label: string;
-  icon?: LucideIcon;
+  icon: LucideIcon;
   onClick: () => void;
 }
 
-interface DropdownProps {
+export interface DropdownProps {
   trigger: React.ReactNode;
   items: DropdownItem[];
-  align?: 'left' | 'right';
+  className?: string;
 }
 
-export function Dropdown({ trigger, items, align = 'right' }: DropdownProps) {
+export function Dropdown({ trigger, items, className = '' }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -33,32 +33,40 @@ export function Dropdown({ trigger, items, align = 'right' }: DropdownProps) {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div onClick={() => setIsOpen(!isOpen)}>{trigger}</div>
+      <div onClick={() => setIsOpen(!isOpen)}>
+        {trigger}
+      </div>
 
-      {isOpen && (
-        <div
-          className={cn(
-            'absolute z-50 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5',
-            align === 'right' ? 'right-0' : 'left-0'
-          )}
-        >
-          <div className="py-1" role="menu">
-            {items.map((item, index) => (
-              <button
-                key={index}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                onClick={() => {
-                  item.onClick();
-                  setIsOpen(false);
-                }}
-              >
-                {item.icon && <item.icon className="h-4 w-4 mr-2" />}
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className={`absolute right-0 mt-2 origin-top-right ${className}`}
+          >
+            <div className="py-1">
+              {items.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      item.onClick();
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#0a5486] transition-colors"
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 } 

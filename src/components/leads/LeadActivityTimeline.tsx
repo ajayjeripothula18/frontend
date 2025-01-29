@@ -30,12 +30,17 @@ interface LeadActivityTimelineProps {
 }
 
 const activityIcons = {
-  [LeadActivityType.STATUS_CHANGE]: RefreshCw,
-  [LeadActivityType.NOTE_ADDED]: MessageSquare,
-  [LeadActivityType.EMAIL_SENT]: Mail,
-  [LeadActivityType.CALL_LOGGED]: Phone,
-  [LeadActivityType.MEETING_SCHEDULED]: Calendar,
+  [LeadActivityType.CREATED]: RefreshCw,
+  [LeadActivityType.STATUS_UPDATED]: RefreshCw,
+  [LeadActivityType.UPDATED]: RefreshCw,
   [LeadActivityType.ASSIGNED]: User,
+  [LeadActivityType.NOTE_ADDED]: MessageSquare,
+  [LeadActivityType.ARCHIVED]: Clock,
+  [LeadActivityType.SCORED]: RefreshCw,
+  [LeadActivityType.QUALIFIED]: RefreshCw,
+  [LeadActivityType.CONVERTED]: RefreshCw,
+  [LeadActivityType.MERGED]: RefreshCw,
+  [LeadActivityType.ESCALATED]: RefreshCw,
 };
 
 export function LeadActivityTimeline({ activities, isLoading }: LeadActivityTimelineProps) {
@@ -94,12 +99,10 @@ export function LeadActivityTimeline({ activities, isLoading }: LeadActivityTime
                           <p className="mt-0.5 text-sm text-gray-500">
                             {formatDate(activity.createdAt)}
                           </p>
+                          <p className="mt-0.5 text-sm text-gray-500">
+                            by {activity.user.name}
+                          </p>
                         </div>
-                        {activity.note && (
-                          <div className="mt-2 text-sm text-gray-700">
-                            {activity.note}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>

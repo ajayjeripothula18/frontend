@@ -21,7 +21,7 @@ export async function GET(
       `${process.env.API_URL}/leads/${params.id}/notes`,
       {
         headers: {
-          'Authorization': `Bearer ${session.accessToken}`,
+          'Authorization': `Bearer ${session.user.accessToken}`,
         },
       }
     );
@@ -52,7 +52,7 @@ export async function POST(
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.accessToken}`,
+          'Authorization': `Bearer ${session.user.accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(validatedData),
